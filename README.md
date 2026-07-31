@@ -30,11 +30,17 @@ Open http://localhost:5173
 
 This repo includes a GitHub Actions workflow (`.github/workflows/deploy.yml`) that automatically builds and deploys the app to GitHub Pages on every push to `main`.
 
-### One-time setup
+### One-time setup (required)
+
+> ⚠️ **Important:** If your site shows a blank page or 404, the most likely cause is that
+> GitHub Pages is still set to **"Deploy from a branch"** instead of **"GitHub Actions"**.
+> The workflow runs, but GitHub Pages ignores it until you change this setting.
 
 1. In your repository on GitHub, go to **Settings → Pages**.
-2. Under **Build and deployment**, set **Source** to **GitHub Actions**.
-3. Push to `main` — the workflow will build and deploy automatically.
+2. Under **Build and deployment → Source**, select **GitHub Actions**.
+   - If it currently says "Deploy from a branch", change it to "GitHub Actions".
+   - This tells GitHub Pages to use the artifact uploaded by the workflow instead of serving raw source files.
+3. Push to `main` (or re-run the workflow) — it will build and deploy automatically.
 
 The site will be available at `https://<your-username>.github.io/<repo-name>/`.
 
