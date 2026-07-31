@@ -1,48 +1,45 @@
 'use client'
 
-import { useCallback, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 
 export default function DropZone() {
-  const [isDragOver, setIsDragOver] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  const handleFile = useCallback((file: File) => {
-    console.log('Файл выбран:', file.name, `(${file.size} байт)`)
-  }, [])
+  const handleFile = (file: File) => {
+    console.log('Выбран файл:', file.name, file.size)
+  }
 
-  const handleDrop = useCallback(
-    (e: React.DragEvent<HTMLDivElement>) => {
-      e.preventDefault()
-      setIsDragOver(false)
-
-      const file = e.dataTransfer.files?.[0]
-      if (file) {
-        handleFile(file)
-      }
-    },
-    [handleFile],
-  )
-
-  const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault()
-    setIsDragOver(true)
-  }, [])
+    setIsDragging(true)
+  }
 
-  const handleDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault()
-    setIsDragOver(false)
-  }, [])
+    setIsDragging(false)
+  }
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    setIsDragging(false)
+
+    const file = e.dataTransfer.files?.[0]
+    if (file) {
+      handleFile(file)
+    }
+  }
 
   return (
     <div
-      className={`flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-12 text-center transition-colors ${
-        isDragOver
+      className={`border-2 border-dashed rounded-xl p-10 text-center transition-all duration-200 cursor-pointer ${
+        isDragging
           ? 'border-blue-500 bg-blue-50'
-          : 'border-gray-300'
+          : 'border-gray-300 hover:border-blue-400 hover:bg-gray-50'
       }`}
-      onDrop={handleDrop}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
     >
       <input
         ref={inputRef}
@@ -58,7 +55,7 @@ export default function DropZone() {
       />
 
       <svg
-        className="mb-4 h-12 w-12 text-gray-400"
+        className="w-12 h-12 text-gray-400 mx-auto"
         fill="none"
         viewBox="0 0 24 24"
         stroke="currentColor"
@@ -72,22 +69,22 @@ export default function DropZone() {
         />
       </svg>
 
-      <p className="text-lg font-medium text-gray-900">
+      <p className="text-lg font-semibold text-gray-700 mt-4">
         Перетащи CSV файл сюда
       </p>
-      <p className="mt-1 text-sm text-gray-500">
+      <p className="text-sm text-gray-500 mt-2">
         или нажми кнопку, чтобы выбрать файл
       </p>
 
       <button
         type="button"
         onClick={() => inputRef.current?.click()}
-        className="mt-4 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 mt-4"
       >
         Выбрать файл
       </button>
 
-      <p className="mt-6 text-xs text-gray-400">
+      <p className="text-xs text-gray-400 mt-6">
         🔒 Данные не покидают твой браузер
       </p>
     </div>
