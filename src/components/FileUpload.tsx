@@ -4,6 +4,7 @@ import { isAcceptedFile, parseFile, type ParsedFile } from '../lib/fileParser'
 
 interface FileUploadProps {
   onFileParsed: (data: ParsedFile) => void
+  onFileCleared?: () => void
 }
 
 function formatFileSize(bytes: number): string {
@@ -14,7 +15,7 @@ function formatFileSize(bytes: number): string {
   return `${value.toFixed(value >= 10 || index === 0 ? 0 : 1)} ${units[index]}`
 }
 
-function FileUpload({ onFileParsed }: FileUploadProps) {
+function FileUpload({ onFileParsed, onFileCleared }: FileUploadProps) {
   const [isDragging, setIsDragging] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -91,6 +92,7 @@ function FileUpload({ onFileParsed }: FileUploadProps) {
   const resetSelection = () => {
     setSelectedFile(null)
     setError(null)
+    onFileCleared?.()
   }
 
   return (
