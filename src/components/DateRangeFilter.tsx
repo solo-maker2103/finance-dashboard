@@ -1,3 +1,5 @@
+import { useDebounce } from '../hooks/useDebounce'
+
 interface DateRangeFilterProps {
   startDate?: string
   endDate?: string
@@ -9,14 +11,22 @@ export default function DateRangeFilter({
   endDate,
   onDateRangeChange,
 }: DateRangeFilterProps) {
+  // Debounce date range changes to improve performance
+  const debouncedOnDateRangeChange = useDebounce(
+    (start?: string, end?: string) => {
+      onDateRangeChange(start, end)
+    },
+    300
+  )
+
   const handleStartChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value || undefined
-    onDateRangeChange(value, endDate)
+    debouncedOnDateRangeChange(value, endDate)
   }
 
   const handleEndChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value || undefined
-    onDateRangeChange(startDate, value)
+    debouncedOnDateRangeChange(startDate, value)
   }
 
   const handleClear = () => {
@@ -33,6 +43,7 @@ export default function DateRangeFilter({
           <button
             onClick={handleClear}
             className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+            aria-label="Clear date range filter"
           >
             Clear
           </button>
@@ -49,6 +60,7 @@ export default function DateRangeFilter({
             value={startDate || ''}
             onChange={handleStartChange}
             className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+            aria-label="Start date"
           />
         </div>
         <div className="flex-1">
@@ -61,6 +73,7 @@ export default function DateRangeFilter({
             value={endDate || ''}
             onChange={handleEndChange}
             className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+            aria-label="End date"
           />
         </div>
       </div>

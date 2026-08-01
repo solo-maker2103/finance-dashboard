@@ -83,11 +83,12 @@ function CustomLegend({
         <button
           onClick={onClearFilter}
           className="mb-3 px-3 py-1.5 text-sm bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors"
+          aria-label="Clear active filter"
         >
           Clear filter
         </button>
       )}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2" role="list">
         {data.map((entry: any, index: number) => {
           const isActive = !activeFilter || entry.category === activeFilter
           const label = viewMode === 'subcategories' ? entry.subcategory : entry.category
@@ -102,10 +103,14 @@ function CustomLegend({
                   ? 'hover:bg-gray-50 cursor-pointer'
                   : 'opacity-40 cursor-not-allowed'
               }`}
+              aria-label={`${label}: ${entry.percentage.toFixed(1)}%${!isActive ? ' (filtered out)' : ''}`}
+              aria-disabled={!isActive}
+              role="listitem"
             >
               <div
                 className="w-3 h-3 rounded-sm flex-shrink-0"
                 style={{ backgroundColor: entry.color }}
+                aria-hidden="true"
               />
               <span className="text-xs text-gray-700 truncate flex-1">{label}</span>
               {activeFilter && isActive && (
@@ -216,6 +221,7 @@ export default function CategoryPieChart({
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
+          aria-hidden="true"
         >
           <path
             strokeLinecap="round"
@@ -228,7 +234,7 @@ export default function CategoryPieChart({
         <p className="text-sm mt-1">
           {transactions.length === 0
             ? 'Import transactions to see category breakdown'
-            : 'No expenses found'}
+            : 'No expenses found in the selected date range'}
         </p>
       </div>
     )
@@ -238,7 +244,7 @@ export default function CategoryPieChart({
     <div className="w-full">
       {hasSubcategories && (
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
-          <div className="flex rounded-lg shadow-sm" role="group">
+          <div className="flex rounded-lg shadow-sm" role="group" aria-label="Chart view mode">
             <button
               onClick={() => setViewMode('categories')}
               className={`px-4 py-2 text-sm font-medium rounded-l-lg border transition-colors ${
@@ -246,6 +252,7 @@ export default function CategoryPieChart({
                   ? 'bg-blue-600 text-white border-blue-600'
                   : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
               }`}
+              aria-pressed={viewMode === 'categories'}
             >
               Categories
             </button>
@@ -256,6 +263,7 @@ export default function CategoryPieChart({
                   ? 'bg-blue-600 text-white border-blue-600'
                   : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
               }`}
+              aria-pressed={viewMode === 'subcategories'}
             >
               Subcategories
             </button>
@@ -266,6 +274,7 @@ export default function CategoryPieChart({
                   ? 'bg-blue-600 text-white border-blue-600'
                   : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
               }`}
+              aria-pressed={viewMode === 'all'}
             >
               All
             </button>
@@ -275,7 +284,7 @@ export default function CategoryPieChart({
 
       <div className="w-full">
         <ResponsiveContainer width="100%" height={400}>
-          <PieChart>
+          <PieChart aria-label="Expense distribution pie chart">
             <Pie
               data={displayData}
               dataKey="amount"
@@ -289,6 +298,7 @@ export default function CategoryPieChart({
               labelLine={false}
               onClick={(entry: any) => handleCategoryClick(entry.category, entry.subcategory)}
               className="cursor-pointer"
+              role="graphics-symbol"
             >
               {displayData.map((entry, index) => (
                 <Cell

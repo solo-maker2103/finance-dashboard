@@ -28,3 +28,56 @@
 .animate-slideIn {
   animation: slideIn 0.3s ease-out;
 }
+
+/* Mobile responsiveness improvements */
+@media (max-width: 640px) {
+  /* Ensure pie chart is responsive on small screens */
+  .recharts-responsive-container {
+    min-height: 300px;
+  }
+  
+  /* Improve touch targets for mobile */
+  button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Ensure category cards stack properly */
+  .category-grid {
+    grid-template-columns: 1fr !important;
+  }
+  
+  /* Improve table readability on mobile */
+  table {
+    font-size: 0.875rem;
+  }
+  
+  th, td {
+    padding: 0.5rem 0.75rem;
+  }
+}
+
+/* Ensure minimum touch target size */
+button, a, input[type="checkbox"], input[type="radio"] {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Exception for small icon buttons */
+button.icon-only {
+  min-height: auto;
+  min-width: auto;
+  padding: 0.5rem;
+}
+
+/* Ensure text is readable without zooming */
+body {
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+/* Improve focus visibility for keyboard navigation */
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}

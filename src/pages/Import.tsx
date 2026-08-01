@@ -57,7 +57,7 @@ const MAPPING_FIELDS: {
     label: 'Subcategory column',
     required: false,
     icon: Tags,
-    hint: 'Optional: for more detailed analytics.',
+    hint: 'Optional: enables hierarchical category analysis (e.g., "Food > Groceries").',
   },
   {
     key: 'description',
@@ -202,6 +202,16 @@ function Import() {
 
   const handleConfirm = async () => {
     if (!parsedFile || mapping.date === null || mapping.amount === null) return
+
+    // Validation: Check if category and subcategory are mapped to the same column
+    if (
+      mapping.category !== null &&
+      mapping.subcategory !== null &&
+      mapping.category === mapping.subcategory
+    ) {
+      setSaveError('Category and Subcategory cannot be mapped to the same column.')
+      return
+    }
 
     const config: MappingConfig = {
       dateColumn: parsedFile.headers[mapping.date],

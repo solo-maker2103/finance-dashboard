@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import type { Transaction } from '../types'
 import { db } from '../store'
@@ -103,7 +103,7 @@ export default function DashboardPage() {
   }, [filteredTransactions])
 
   // Handlers
-  const handleCategorySelect = (category: string, subcategory?: string) => {
+  const handleCategorySelect = useCallback((category: string, subcategory?: string) => {
     if (subcategory) {
       // Clicking subcategory: set both category and subcategory
       setSelectedCategory(category)
@@ -113,7 +113,7 @@ export default function DashboardPage() {
       setSelectedCategory(selectedCategory === category ? undefined : category)
       setSelectedSubcategory(undefined)
     }
-  }
+  }, [selectedCategory])
 
   const handleClearCategoryFilter = () => {
     setSelectedCategory(undefined)
@@ -354,7 +354,23 @@ export default function DashboardPage() {
         {/* Category Breakdown */}
         <div className="mt-8">
           <div className="rounded-lg border border-gray-200 bg-white p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Category Breakdown</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-gray-900">Category Breakdown</h2>
+              <div className="group relative">
+                <button
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                  aria-label="Help: Category breakdown"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </button>
+                <div className="absolute right-0 top-full mt-2 w-80 rounded-lg bg-gray-900 px-4 py-3 text-sm text-white opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10 shadow-lg">
+                  <p className="font-semibold mb-1">Category Breakdown</p>
+                  <p className="text-xs text-gray-300">Click on a category to filter transactions. Expand cards to see subcategories. Use the controls above to sort and filter the view.</p>
+                </div>
+              </div>
+            </div>
             <CategoryBreakdown
               transactions={filteredTransactions}
               onCategorySelect={handleCategorySelect}
@@ -364,7 +380,23 @@ export default function DashboardPage() {
 
         {/* Recent Transactions */}
         <div className="mt-8 rounded-lg border border-gray-200 bg-white p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Recent Transactions</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-900">Recent Transactions</h2>
+            <div className="group relative">
+              <button
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+                aria-label="Help: Recent transactions"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </button>
+              <div className="absolute right-0 top-full mt-2 w-80 rounded-lg bg-gray-900 px-4 py-3 text-sm text-white opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10 shadow-lg">
+                <p className="font-semibold mb-1">Recent Transactions</p>
+                <p className="text-xs text-gray-300">Shows your 20 most recent transactions. Use filters above to narrow down the list by category, subcategory, or date range.</p>
+              </div>
+            </div>
+          </div>
           {filteredTransactions.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
@@ -448,6 +480,34 @@ export default function DashboardPage() {
           )}
         </div>
 
+        {/* What's New Section */}
+        <div className="mt-8 rounded-lg border border-blue-200 bg-blue-50 p-6">
+          <div className="flex items-start gap-3">
+            <div className="flex-shrink-0">
+              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <h3 className="text-base font-semibold text-blue-900 mb-2">What's New: Subcategory Support</h3>
+              <div className="text-sm text-blue-800 space-y-2">
+                <p>
+                  You can now organize transactions with <strong>subcategories</strong> for more detailed analytics.
+                </p>
+                <ul className="list-disc list-inside space-y-1 ml-2">
+                  <li>Import files with category and subcategory columns</li>
+                  <li>Click on categories in charts to filter your view</li>
+                  <li>Expand category cards to see subcategory breakdowns</li>
+                  <li>Use the view mode toggle to switch between categories, subcategories, or both</li>
+                </ul>
+                <p className="text-xs text-blue-700 mt-2">
+                  <strong>Tip:</strong> Use the "Show only with subcategories" filter to focus on categories with detailed breakdowns.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Empty State */}
         {transactions.length === 0 && (
           <div className="mt-8 rounded-lg border border-dashed border-gray-300 bg-white p-12 text-center">
@@ -456,6 +516,7 @@ export default function DashboardPage() {
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
+              aria-hidden="true"
             >
               <path
                 strokeLinecap="round"

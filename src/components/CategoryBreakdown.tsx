@@ -74,6 +74,7 @@ export default function CategoryBreakdown({
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
+          aria-hidden="true"
         >
           <path
             strokeLinecap="round"
@@ -106,6 +107,7 @@ export default function CategoryBreakdown({
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as SortOption)}
             className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            aria-label="Sort categories by"
           >
             <option value="amount">By Amount</option>
             <option value="alphabetical">Alphabetically</option>
@@ -121,6 +123,7 @@ export default function CategoryBreakdown({
               checked={showOnlyWithSubcategories}
               onChange={(e) => setShowOnlyWithSubcategories(e.target.checked)}
               className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              aria-label="Show only categories with subcategories"
             />
             <span className="ml-2 text-sm text-gray-700">Show only with subcategories</span>
           </label>
@@ -145,6 +148,7 @@ export default function CategoryBreakdown({
                     <button
                       onClick={() => handleCategoryClick(item.category)}
                       className="text-left w-full group"
+                      aria-label={`${item.category}: ${formatCurrency(item.amount)}, ${item.count} transactions, ${item.percentage.toFixed(1)}% of total`}
                     >
                       <h3 className="text-lg font-bold text-gray-900 truncate group-hover:text-blue-600 transition-colors">
                         {item.category}
@@ -182,6 +186,8 @@ export default function CategoryBreakdown({
                   <button
                     onClick={() => toggleCategory(item.category)}
                     className="mt-3 flex items-center text-sm text-blue-600 hover:text-blue-800 transition-colors"
+                    aria-expanded={isExpanded}
+                    aria-label={`${isExpanded ? 'Collapse' : 'Expand'} ${item.subcategories.length} subcategories`}
                   >
                     <svg
                       className={`w-5 h-5 mr-1 transition-transform duration-200 ${
@@ -190,6 +196,7 @@ export default function CategoryBreakdown({
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
+                      aria-hidden="true"
                     >
                       <path
                         strokeLinecap="round"
@@ -212,6 +219,7 @@ export default function CategoryBreakdown({
                         key={sub.name}
                         onClick={() => handleSubcategoryClick(item.category, sub.name)}
                         className="w-full text-left p-3 bg-white rounded-md hover:bg-blue-50 transition-colors group"
+                        aria-label={`${sub.name}: ${formatCurrency(sub.amount)}, ${sub.count} transactions, ${sub.percentage.toFixed(1)}% of category`}
                       >
                         <div className="flex items-center justify-between mb-1">
                           <span className="font-medium text-gray-900 group-hover:text-blue-600 transition-colors truncate">

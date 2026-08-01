@@ -13,62 +13,8 @@ import {
   WandSparkles,
 } from 'lucide-react'
 import { db } from '../store'
-import type { Transaction, TransactionType } from '../types'
-
-function buildDemoTransactions(): Transaction[] {
-  const now = new Date()
-  const daysAgo = (n: number): string => {
-    const date = new Date(now)
-    date.setDate(date.getDate() - n)
-    return date.toISOString().slice(0, 10)
-  }
-
-  interface DemoRow {
-    description: string
-    amount: number
-    category: string
-    daysAgo: number
-    type: TransactionType
-  }
-
-  const rows: DemoRow[] = [
-    { description: 'Salary – Acme Corp', amount: 5200, category: 'Salary', daysAgo: 30, type: 'income' },
-    { description: 'Salary – Acme Corp', amount: 5200, category: 'Salary', daysAgo: 2, type: 'income' },
-    { description: 'Freelance – Website design', amount: 850, category: 'Freelance', daysAgo: 11, type: 'income' },
-    { description: 'Client consultation', amount: 320, category: 'Freelance', daysAgo: 19, type: 'income' },
-    { description: 'Refund – Online store', amount: 63.5, category: 'Refund', daysAgo: 22, type: 'income' },
-    { description: 'Bank interest', amount: 41.2, category: 'Interest', daysAgo: 8, type: 'income' },
-    { description: 'Dividend payment', amount: 120, category: 'Investments', daysAgo: 15, type: 'income' },
-    { description: 'Rent payment', amount: 1450, category: 'Housing', daysAgo: 6, type: 'expense' },
-    { description: 'Groceries – Whole Foods', amount: 118.4, category: 'Groceries', daysAgo: 1, type: 'expense' },
-    { description: 'Groceries – Local market', amount: 54.3, category: 'Groceries', daysAgo: 9, type: 'expense' },
-    { description: 'Electricity bill', amount: 86.2, category: 'Utilities', daysAgo: 12, type: 'expense' },
-    { description: 'Internet & cable', amount: 59.99, category: 'Utilities', daysAgo: 14, type: 'expense' },
-    { description: 'Water bill', amount: 33.5, category: 'Utilities', daysAgo: 20, type: 'expense' },
-    { description: 'Dinner with friends', amount: 76.8, category: 'Dining Out', daysAgo: 3, type: 'expense' },
-    { description: 'Coffee & snacks', amount: 12.5, category: 'Dining Out', daysAgo: 5, type: 'expense' },
-    { description: 'Lunch at work', amount: 18.9, category: 'Dining Out', daysAgo: 10, type: 'expense' },
-    { description: 'Gas station', amount: 48.2, category: 'Transportation', daysAgo: 7, type: 'expense' },
-    { description: 'Ride share', amount: 22.6, category: 'Transportation', daysAgo: 13, type: 'expense' },
-    { description: 'Monthly transit pass', amount: 89, category: 'Transportation', daysAgo: 17, type: 'expense' },
-    { description: 'Netflix', amount: 15.99, category: 'Subscriptions', daysAgo: 4, type: 'expense' },
-    { description: 'Spotify', amount: 11.99, category: 'Subscriptions', daysAgo: 16, type: 'expense' },
-    { description: 'Cloud storage', amount: 9.99, category: 'Subscriptions', daysAgo: 23, type: 'expense' },
-    { description: 'Cinema tickets', amount: 32, category: 'Entertainment', daysAgo: 18, type: 'expense' },
-    { description: 'Concert ticket', amount: 120, category: 'Entertainment', daysAgo: 25, type: 'expense' },
-    { description: 'New running shoes', amount: 129.99, category: 'Shopping', daysAgo: 8, type: 'expense' },
-    { description: 'Online store order', amount: 87.45, category: 'Shopping', daysAgo: 21, type: 'expense' },
-    { description: 'Pharmacy', amount: 27.35, category: 'Health', daysAgo: 12, type: 'expense' },
-    { description: 'Gym membership', amount: 39.99, category: 'Fitness', daysAgo: 15, type: 'expense' },
-    { description: 'Car insurance', amount: 115, category: 'Insurance', daysAgo: 24, type: 'expense' },
-    { description: 'Haircut', amount: 45, category: 'Personal Care', daysAgo: 20, type: 'expense' },
-  ]
-
-  return rows.map(({ daysAgo: ago, ...row }) => ({
-    ...row,
-    date: daysAgo(ago),
-  }))
-}
+import { demoTransactions } from '../lib/demoData'
+import type { Transaction } from '../types'
 
 function Landing() {
   const navigate = useNavigate()
@@ -79,7 +25,7 @@ function Landing() {
     setLoadingDemo(true)
     try {
       await db.transactions.clear()
-      await db.transactions.bulkAdd(buildDemoTransactions())
+      await db.transactions.bulkAdd(demoTransactions)
       navigate('/dashboard')
     } finally {
       setLoadingDemo(false)
