@@ -1,8 +1,10 @@
 import type {
+  CategoryBreakdown,
   CategorySummary,
   DashboardData,
   MappingConfig,
   MonthlySummary,
+  SubcategorySummary,
   SummaryStats,
   Transaction,
   TransactionType,
@@ -265,36 +267,103 @@ export function calculateSummary(transactions: Transaction[]): DashboardData {
 }
 
 /**
- * Filters transactions to those whose date falls within the given range (inclusive).
+ * Calculates hierarchical category breakdown from transactions.
+ * Groups transactions by category and subcategory, computing totals and percentages.
  */
-export function filterTransactions(
-  transactions: Transaction[],
-  dateRange: { start: Date; end: Date }
-): Transaction[] {
-  if (!dateRange || !dateRange.start || !dateRange.end) return []
-  if (dateRange.start.getTime() > dateRange.end.getTime()) return []
+export function calculateCategoryBreakdown(
+  transactions: Transaction[]
+): CategoryBreakdown[] {
+  if (!Array.isArray(transactions) || transactions.length === 0) return []
 
-  const start = new Date(
-    dateRange.start.getFullYear(),
-    dateRange.start.getMonth(),
-    dateRange.start.getDate()
-  ).getTime()
-  const end = new Date(
-    dateRange.end.getFullYear(),
-    dateRange.end.getMonth(),
-    dateRange.end.getDate(),
-    23,
-    59,
-    59,
-    999
-  ).getTime()
+  // First pass: calculate category totals
+  const categoryMap = new Map<string, { amount: number; count: number }>()
+  let totalExpenses = 0
 
-  return transactions.filter((transaction) => {
-    const date = parseDate(transaction.date)
-    if (!date) return false
-    const time = date.getTime()
-    return time >= start && time <= end
-  })
+  for (const transaction of transactions) {
+    if (transaction.type !== 'expense') continue
+
+    const category = transaction.category || DEFAULT_CATEGORY
+    const existing = categoryMap.get(category)
+
+    if (existing) {
+      existing.amount += transaction.amount
+      existing.count += 1
+    } else {
+      categoryMap.set(category, {
+        amount: transaction.amount,
+        count: 1,
+      })
+    }
+
+    totalExpenses += transaction.amount
+  }
+
+  if (totalExpenses === 0) return []
+
+  // Second pass: calculate subcategory breakdowns
+  const subcategoryMap = new Map<string, Map<string, { amount: number; count: number }>>()
+
+  for (const transaction of transactions) {
+    if (transaction.type !== 'expense') continue
+
+    const category = transaction.category || DEFAULT_CATEGORY
+    const subcategory = transaction.subcategory || 'General'
+
+    if (!subcategoryMap.has(category)) {
+      subcategoryMap.set(category, new Map())
+    }
+
+    const categorySubMap = subcategoryMap.get(category)!
+    const existing = categorySubMap.get(subcategory)
+
+    if (existing) {
+      existing.amount += transaction.amount
+      existing.count += 1
+    } else {
+      categorySubMap.set(subcategory, {
+        amount: transaction.amount,
+        count: 1,
+      })
+    }
+  }
+
+  // Build breakdown array
+  const breakdown: CategoryBreakdown[] = []
+
+  for (const [category, data] of categoryMap) {
+    const percentage = (data.amount / totalExpenses) * 100
+    const categorySubMap = subcategoryMap.get(category)
+
+    const subcategories: SubcategorySummary[] = []
+
+    if (categorySubMap) {
+      for (const [subcategory, subData] of categorySubMap) {
+        const subcategoryPercentage = (subData.amount / data.amount) * 100
+        subcategories.push({
+          name: subcategory,
+          amount: subData.amount,
+          count: subData.count,
+          percentage: subcategoryPercentage,
+        })
+      }
+
+      // Sort subcategories by amount descending
+      subcategories.sort((a, b) => b.amount - a.amount)
+    }
+
+    breakdown.push({
+      category,
+      amount: data.amount,
+      count: data.count,
+      percentage,
+      subcategories,
+    })
+  }
+
+  // Sort by amount descending
+  breakdown.sort((a, b) => b.amount - a.amount)
+
+  return breakdown
 }
 
 /**

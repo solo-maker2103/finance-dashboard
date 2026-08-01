@@ -39,6 +39,21 @@ export interface CategorySummary {
   count: number
 }
 
+export interface SubcategorySummary {
+  name: string
+  amount: number
+  count: number
+  percentage: number
+}
+
+export interface CategoryBreakdown {
+  category: string
+  amount: number
+  count: number
+  percentage: number
+  subcategories: SubcategorySummary[]
+}
+
 export interface DashboardData {
   transactions: Transaction[]
   summary: SummaryStats
