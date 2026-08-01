@@ -1,9 +1,10 @@
-export type ColumnType = 'date' | 'amount' | 'category' | 'description'
+export type ColumnType = 'date' | 'amount' | 'category' | 'subcategory' | 'description'
 
 export interface ColumnMapping {
   date: number | null
   amount: number | null
   category: number | null
+  subcategory: number | null
   description: number | null
 }
 
@@ -49,16 +50,22 @@ const KEYWORDS: Record<ColumnType, string[]> = {
   ],
   category: [
     'category',
-    'type',
     'group',
     'class',
     'kind',
     'merchant category',
     'категория',
-    'тип',
     'группа',
     'класс',
     'вид',
+  ],
+  subcategory: [
+    'subcategory',
+    'sub category',
+    'sub_category',
+    'type',
+    'подкатегория',
+    'тип',
   ],
   description: [
     'description',
@@ -181,6 +188,7 @@ export function detectColumnType(headers: string[], sampleData: any[]): ColumnMa
     date: null,
     amount: null,
     category: null,
+    subcategory: null,
     description: null,
   }
 

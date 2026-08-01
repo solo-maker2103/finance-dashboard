@@ -9,6 +9,7 @@ import {
   ListTree,
   LoaderCircle,
   StickyNote,
+  Tags,
   Wallet,
 } from 'lucide-react'
 import FileUpload from '../components/FileUpload'
@@ -19,7 +20,7 @@ import type { MappingConfig, Transaction, TransactionType } from '../types'
 
 const PREVIEW_LIMIT = 5
 
-type MappingKey = 'date' | 'amount' | 'category' | 'description'
+type MappingKey = 'date' | 'amount' | 'category' | 'subcategory' | 'description'
 
 interface MappedRow extends Transaction {}
 
@@ -52,6 +53,13 @@ const MAPPING_FIELDS: {
     hint: 'Optional: used to group transactions.',
   },
   {
+    key: 'subcategory',
+    label: 'Subcategory column',
+    required: false,
+    icon: Tags,
+    hint: 'Optional: for more detailed analytics.',
+  },
+  {
     key: 'description',
     label: 'Description column',
     required: false,
@@ -82,6 +90,12 @@ const COLUMN_STYLES: Record<
     chipClass: 'bg-violet-100 text-violet-700',
     chipText: 'Category',
   },
+  subcategory: {
+    headerClass: 'bg-pink-50 text-pink-800',
+    cellClass: 'bg-pink-50/60',
+    chipClass: 'bg-pink-100 text-pink-700',
+    chipText: 'Subcategory',
+  },
   description: {
     headerClass: 'bg-amber-50 text-amber-800',
     cellClass: 'bg-amber-50/60',
@@ -90,7 +104,7 @@ const COLUMN_STYLES: Record<
   },
 }
 
-const STEP_ORDER: MappingKey[] = ['date', 'amount', 'category', 'description']
+const STEP_ORDER: MappingKey[] = ['date', 'amount', 'category', 'subcategory', 'description']
 
 function typeForColumn(mapping: ColumnMapping, column: number): MappingKey | null {
   for (const key of STEP_ORDER) {
@@ -117,6 +131,8 @@ function mapRow(row: unknown[], mapping: ColumnMapping): MappedRow {
     amount: Math.abs(amount ?? 0),
     category:
       mapping.category !== null ? String(row[mapping.category] ?? '').trim() : '',
+    subcategory:
+      mapping.subcategory !== null ? String(row[mapping.subcategory] ?? '').trim() : '',
     description:
       mapping.description !== null ? String(row[mapping.description] ?? '').trim() : '',
     type: (amount ?? 0) < 0 ? 'expense' : 'income',
@@ -143,6 +159,7 @@ function Import() {
     date: null,
     amount: null,
     category: null,
+    subcategory: null,
     description: null,
   })
   const [saving, setSaving] = useState(false)
@@ -156,7 +173,7 @@ function Import() {
 
   const handleFileCleared = useCallback(() => {
     setParsedFile(null)
-    setMapping({ date: null, amount: null, category: null, description: null })
+    setMapping({ date: null, amount: null, category: null, subcategory: null, description: null })
     setSaveError(null)
   }, [])
 
@@ -191,6 +208,8 @@ function Import() {
       amountColumn: parsedFile.headers[mapping.amount],
       categoryColumn:
         mapping.category !== null ? parsedFile.headers[mapping.category] : '',
+      subcategoryColumn:
+        mapping.subcategory !== null ? parsedFile.headers[mapping.subcategory] : '',
       descriptionColumn:
         mapping.description !== null ? parsedFile.headers[mapping.description] : '',
     }
@@ -444,6 +463,7 @@ function Import() {
                       <th className="px-4 py-3">Date</th>
                       <th className="px-4 py-3">Amount</th>
                       <th className="px-4 py-3">Category</th>
+                      <th className="px-4 py-3">Subcategory</th>
                       <th className="px-4 py-3">Description</th>
                     </tr>
                   </thead>
@@ -465,6 +485,11 @@ function Import() {
                             <span className="text-gray-400">—</span>
                           )}
                         </td>
+                        <td className="whitespace-nowrap px-4 py-2.5 text-gray-700">
+                          {row.subcategory || (
+                            <span className="text-gray-400">—</span>
+                          )}
+                        </td>
                         <td className="max-w-xs truncate px-4 py-2.5 text-gray-700">
                           {row.description || (
                             <span className="text-gray-400">—</span>
@@ -475,7 +500,7 @@ function Import() {
                     {previewRows.length === 0 && (
                       <tr>
                         <td
-                          colSpan={4}
+                          colSpan={5}
                           className="px-4 py-8 text-center text-sm text-gray-400"
                         >
                           No data rows found to preview.
