@@ -142,8 +142,19 @@ function mapRow(row: unknown[], mapping: ColumnMapping, currency: Currency = 'US
   const rawDate = mapping.date !== null ? row[mapping.date] : ''
   const amount = mapping.amount !== null ? parseAmount(row[mapping.amount]) : null
 
+  // Convert Date objects to ISO format (YYYY-MM-DD), otherwise use string representation
+  let dateString: string
+  if (rawDate instanceof Date) {
+    const year = rawDate.getFullYear()
+    const month = String(rawDate.getMonth() + 1).padStart(2, '0')
+    const day = String(rawDate.getDate()).padStart(2, '0')
+    dateString = `${year}-${month}-${day}`
+  } else {
+    dateString = String(rawDate ?? '').trim()
+  }
+
   return {
-    date: String(rawDate ?? '').trim(),
+    date: dateString,
     amount: Math.abs(amount ?? 0),
     currency,
     category:
@@ -390,6 +401,18 @@ function Import() {
                         {row.map((cell, column) => {
                           const mappedType = typeForColumn(mapping, column)
                           const style = mappedType ? COLUMN_STYLES[mappedType] : null
+                          
+                          // Format Date objects nicely
+                          let displayValue: string
+                          if (cell instanceof Date) {
+                            const year = cell.getFullYear()
+                            const month = String(cell.getMonth() + 1).padStart(2, '0')
+                            const day = String(cell.getDate()).padStart(2, '0')
+                            displayValue = `${year}-${month}-${day}`
+                          } else {
+                            displayValue = String(cell ?? '')
+                          }
+                          
                           return (
                             <td
                               key={column}
@@ -397,7 +420,7 @@ function Import() {
                                 style ? style.cellClass : ''
                               }`}
                             >
-                              {String(cell ?? '') || '—'}
+                              {displayValue || '—'}
                             </td>
                           )
                         })}
