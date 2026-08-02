@@ -1,9 +1,12 @@
 export type TransactionType = 'income' | 'expense'
 
+export type Currency = 'USD' | 'EUR' | 'GBP' | 'RUB' | 'CNY' | 'JPY' | 'KRW' | 'INR' | 'BRL' | 'CAD' | 'AUD' | 'CHF'
+
 export interface Transaction {
   id?: number
   date: string
   amount: number
+  currency: Currency
   category: string
   subcategory?: string
   description: string
@@ -17,6 +20,7 @@ export interface MappingConfig {
   categoryColumn: string
   subcategoryColumn?: string
   descriptionColumn: string
+  currency: Currency
 }
 
 export interface SummaryStats {
@@ -59,4 +63,5 @@ export interface DashboardData {
   summary: SummaryStats
   monthlyData: MonthlySummary[]
   categoryData: CategorySummary[]
+  currency: Currency
 }

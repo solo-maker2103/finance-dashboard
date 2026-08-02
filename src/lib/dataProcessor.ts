@@ -1,6 +1,7 @@
 import type {
   CategoryBreakdown,
   CategorySummary,
+  Currency,
   DashboardData,
   MappingConfig,
   MonthlySummary,
@@ -137,6 +138,7 @@ export function processTransactions(
   if (!mapping) return []
 
   const transactions: Transaction[] = []
+  const currency: Currency = mapping.currency || 'USD'
 
   for (const row of rawData) {
     if (row === null || row === undefined) continue
@@ -163,6 +165,7 @@ export function processTransactions(
       id: generateId(),
       date: toIsoDate(date),
       amount: Math.abs(amount),
+      currency,
       category:
         typeof categoryValue === 'string' && categoryValue.trim()
           ? categoryValue.trim()
@@ -201,6 +204,9 @@ export function calculateSummary(transactions: Transaction[]): DashboardData {
 
   const monthlyMap = new Map<string, MonthlySummary>()
   const categoryMap = new Map<string, CategorySummary>()
+
+  // Get currency from first transaction (all transactions should have the same currency)
+  const currency: Currency = transactions.length > 0 ? transactions[0].currency : 'USD'
 
   for (const transaction of transactions) {
     const amount = transaction.amount
@@ -263,6 +269,7 @@ export function calculateSummary(transactions: Transaction[]): DashboardData {
     summary,
     monthlyData,
     categoryData,
+    currency,
   }
 }
 
@@ -370,7 +377,7 @@ export function calculateCategoryBreakdown(
  * Formats a number as a currency string.
  * Defaults to USD when no currency is provided.
  */
-export function formatCurrency(amount: number, currency = 'USD'): string {
+export function formatCurrency(amount: number, currency: Currency = 'USD'): string {
   if (!Number.isFinite(amount)) return '—'
 
   return new Intl.NumberFormat('en-US', {

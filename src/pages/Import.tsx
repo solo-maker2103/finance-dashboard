@@ -16,7 +16,7 @@ import FileUpload from '../components/FileUpload'
 import { detectColumnType, type ColumnMapping } from '../lib/columnDetector'
 import type { ParsedFile } from '../lib/fileParser'
 import { db } from '../store'
-import type { MappingConfig, Transaction, TransactionType } from '../types'
+import type { MappingConfig, Transaction, TransactionType, Currency } from '../types'
 
 const PREVIEW_LIMIT = 5
 
@@ -66,6 +66,21 @@ const MAPPING_FIELDS: {
     icon: StickyNote,
     hint: 'Optional: free-text description.',
   },
+]
+
+const CURRENCIES: { value: Currency; label: string; symbol: string }[] = [
+  { value: 'USD', label: 'US Dollar', symbol: '$' },
+  { value: 'EUR', label: 'Euro', symbol: '€' },
+  { value: 'GBP', label: 'British Pound', symbol: '£' },
+  { value: 'RUB', label: 'Russian Ruble', symbol: '₽' },
+  { value: 'CNY', label: 'Chinese Yuan', symbol: '¥' },
+  { value: 'JPY', label: 'Japanese Yen', symbol: '¥' },
+  { value: 'KRW', label: 'South Korean Won', symbol: '₩' },
+  { value: 'INR', label: 'Indian Rupee', symbol: '₹' },
+  { value: 'BRL', label: 'Brazilian Real', symbol: 'R$' },
+  { value: 'CAD', label: 'Canadian Dollar', symbol: 'C$' },
+  { value: 'AUD', label: 'Australian Dollar', symbol: 'A$' },
+  { value: 'CHF', label: 'Swiss Franc', symbol: 'Fr' },
 ]
 
 const COLUMN_STYLES: Record<
@@ -122,13 +137,14 @@ function parseAmount(value: unknown): number | null {
   return Number.isFinite(parsed) ? parsed : null
 }
 
-function mapRow(row: unknown[], mapping: ColumnMapping): MappedRow {
+function mapRow(row: unknown[], mapping: ColumnMapping, currency: Currency = 'USD'): MappedRow {
   const rawDate = mapping.date !== null ? row[mapping.date] : ''
   const amount = mapping.amount !== null ? parseAmount(row[mapping.amount]) : null
 
   return {
     date: String(rawDate ?? '').trim(),
     amount: Math.abs(amount ?? 0),
+    currency,
     category:
       mapping.category !== null ? String(row[mapping.category] ?? '').trim() : '',
     subcategory:
@@ -139,12 +155,13 @@ function mapRow(row: unknown[], mapping: ColumnMapping): MappedRow {
   }
 }
 
-function formatAmount(amount: number, type: TransactionType): string {
+function formatAmount(amount: number, type: TransactionType, currency: Currency = 'USD'): string {
+  const currencySymbol = CURRENCIES.find(c => c.value === currency)?.symbol || '$'
   const formatted = amount.toLocaleString('en-US', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })
-  return type === 'expense' ? `-$${formatted}` : `+$${formatted}`
+  return type === 'expense' ? `-${currencySymbol}${formatted}` : `+${currencySymbol}${formatted}`
 }
 
 function formatDate(value: string): string {
@@ -162,6 +179,7 @@ function Import() {
     subcategory: null,
     description: null,
   })
+  const [currency, setCurrency] = useState<Currency>('USD')
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
 
@@ -174,6 +192,7 @@ function Import() {
   const handleFileCleared = useCallback(() => {
     setParsedFile(null)
     setMapping({ date: null, amount: null, category: null, subcategory: null, description: null })
+    setCurrency('USD')
     setSaveError(null)
   }, [])
 
@@ -196,7 +215,7 @@ function Import() {
     parsedFile && mapping
       ? parsedFile.rows.slice(0, PREVIEW_LIMIT).map((row, index) => ({
           id: index,
-          ...mapRow(row, mapping),
+          ...mapRow(row, mapping, currency),
         }))
       : []
 
@@ -222,6 +241,7 @@ function Import() {
         mapping.subcategory !== null ? parsedFile.headers[mapping.subcategory] : '',
       descriptionColumn:
         mapping.description !== null ? parsedFile.headers[mapping.description] : '',
+      currency,
     }
 
     setSaving(true)
@@ -373,10 +393,41 @@ function Import() {
               </div>
             </section>
 
+            {/* Currency Selection */}
+            <section className="mt-6 rounded-lg border border-gray-200 bg-white">
+              <div className="border-b border-gray-200 px-5 py-4">
+                <h2 className="text-base font-semibold text-gray-900">2. Select Currency</h2>
+                <p className="mt-0.5 text-sm text-gray-500">
+                  Choose the currency for your transactions.
+                </p>
+              </div>
+
+              <div className="p-5">
+                <label htmlFor="currency-select" className="block text-sm font-medium text-gray-900 mb-2">
+                  Currency
+                </label>
+                <select
+                  id="currency-select"
+                  value={currency}
+                  onChange={(e) => setCurrency(e.target.value as Currency)}
+                  className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm transition focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400"
+                >
+                  {CURRENCIES.map((curr) => (
+                    <option key={curr.value} value={curr.value}>
+                      {curr.symbol} {curr.label} ({curr.value})
+                    </option>
+                  ))}
+                </select>
+                <p className="mt-2 text-xs text-gray-500">
+                  This currency will be used for all imported transactions and displayed throughout the dashboard.
+                </p>
+              </div>
+            </section>
+
             {/* Mapping dropdowns */}
             <section className="mt-6 rounded-lg border border-gray-200 bg-white">
               <div className="border-b border-gray-200 px-5 py-4">
-                <h2 className="text-base font-semibold text-gray-900">2. Map columns</h2>
+                <h2 className="text-base font-semibold text-gray-900">3. Map columns</h2>
                 <p className="mt-0.5 text-sm text-gray-500">
                   Select which column corresponds to each field. Date and amount are
                   required.
@@ -458,7 +509,7 @@ function Import() {
             <section className="mt-6 rounded-lg border border-gray-200 bg-white">
               <div className="border-b border-gray-200 px-5 py-4">
                 <h2 className="text-base font-semibold text-gray-900">
-                  3. Preview parsed data
+                  4. Preview parsed data
                 </h2>
                 <p className="mt-0.5 text-sm text-gray-500">
                   Here is how the first {PREVIEW_LIMIT} rows will look after mapping.
@@ -488,7 +539,7 @@ function Import() {
                             row.type === 'expense' ? 'text-red-600' : 'text-green-600'
                           }`}
                         >
-                          {formatAmount(row.amount, row.type)}
+                          {formatAmount(row.amount, row.type, row.currency)}
                         </td>
                         <td className="whitespace-nowrap px-4 py-2.5 text-gray-700">
                           {row.category || (

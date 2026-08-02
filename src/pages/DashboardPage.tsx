@@ -1,5 +1,9 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import {
+  Trash2,
+  AlertTriangle,
+} from 'lucide-react'
 import type { Transaction } from '../types'
 import { db } from '../store'
 import { calculateSummary, calculateCategoryBreakdown, formatCurrency } from '../lib/dataProcessor'
@@ -21,6 +25,10 @@ export default function DashboardPage() {
   const [selectedCategory, setSelectedCategory] = useState<string | undefined>()
   const [selectedSubcategory, setSelectedSubcategory] = useState<string | undefined>()
   const [dateRange, setDateRange] = useState<DateRange>({})
+  
+  // Clear data state
+  const [showClearConfirm, setShowClearConfirm] = useState(false)
+  const [isClearing, setIsClearing] = useState(false)
 
   // Load transactions from database
   useEffect(() => {
@@ -96,6 +104,8 @@ export default function DashboardPage() {
   const summary = useMemo(() => {
     return calculateSummary(filteredTransactions)
   }, [filteredTransactions])
+  
+  const currency = summary.currency
 
   // Category breakdown for filtered transactions
   const categoryBreakdown = useMemo(() => {
@@ -134,6 +144,24 @@ export default function DashboardPage() {
     setDateRange({ start, end })
   }
 
+  const handleClearAllData = async () => {
+    setIsClearing(true)
+    try {
+      await db.transactions.clear()
+      await db.mappingConfig.clear()
+      setTransactions([])
+      setShowClearConfirm(false)
+      
+      // Clear URL params
+      setSearchParams('', { replace: true })
+    } catch (error) {
+      console.error('Failed to clear data:', error)
+      alert('Failed to clear data. Please try again.')
+    } finally {
+      setIsClearing(false)
+    }
+  }
+
   // Check if any filters are active
   const hasActiveFilters = selectedCategory || selectedSubcategory || dateRange.start || dateRange.end
 
@@ -152,10 +180,23 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-gray-50">
       <header className="border-b border-gray-200 bg-white">
         <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-          <h1 className="text-2xl font-semibold text-gray-900">Dashboard</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            Your financial overview at a glance.
-          </p>
+          <div className="flex items-start justify-between">
+            <div>
+              <h1 className="text-2xl font-semibold text-gray-900">Dashboard</h1>
+              <p className="mt-1 text-sm text-gray-500">
+                Your financial overview at a glance.
+              </p>
+            </div>
+            {transactions.length > 0 && (
+              <button
+                onClick={() => setShowClearConfirm(true)}
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 transition-colors"
+              >
+                <Trash2 className="h-4 w-4" />
+                Clear All Data
+              </button>
+            )}
+          </div>
         </div>
       </header>
 
@@ -259,7 +300,7 @@ export default function DashboardPage() {
           <div className="rounded-lg border border-gray-200 bg-white p-6">
             <p className="text-sm font-medium text-gray-500">Total Income</p>
             <p className="mt-2 text-2xl font-semibold text-green-600">
-              {formatCurrency(summary.summary.totalIncome)}
+              {formatCurrency(summary.summary.totalIncome, currency)}
             </p>
             <p className="mt-1 text-xs text-gray-500">
               {summary.summary.transactionCount} transactions
@@ -268,7 +309,7 @@ export default function DashboardPage() {
           <div className="rounded-lg border border-gray-200 bg-white p-6">
             <p className="text-sm font-medium text-gray-500">Total Expenses</p>
             <p className="mt-2 text-2xl font-semibold text-red-600">
-              {formatCurrency(summary.summary.totalExpense)}
+              {formatCurrency(summary.summary.totalExpense, currency)}
             </p>
             <p className="mt-1 text-xs text-gray-500">
               {categoryBreakdown.length} categories
@@ -277,7 +318,7 @@ export default function DashboardPage() {
           <div className="rounded-lg border border-gray-200 bg-white p-6">
             <p className="text-sm font-medium text-gray-500">Net Balance</p>
             <p className={`mt-2 text-2xl font-semibold ${summary.summary.netBalance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-              {formatCurrency(summary.summary.netBalance)}
+              {formatCurrency(summary.summary.netBalance, currency)}
             </p>
             <p className="mt-1 text-xs text-gray-500">
               Income - Expenses
@@ -307,13 +348,13 @@ export default function DashboardPage() {
                   <div key={month.month} className="space-y-1">
                     <div className="flex items-center justify-between text-sm">
                       <span className="font-medium text-gray-700">{month.month}</span>
-                      <div className="flex gap-4 text-xs">
-                        <span className="text-green-600">+{formatCurrency(month.income)}</span>
-                        <span className="text-red-600">-{formatCurrency(month.expense)}</span>
-                        <span className={`font-medium ${month.net >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          {formatCurrency(month.net)}
-                        </span>
-                      </div>
+                    <div className="flex gap-4 text-xs">
+                      <span className="text-green-600">+{formatCurrency(month.income, currency)}</span>
+                      <span className="text-red-600">-{formatCurrency(month.expense, currency)}</span>
+                      <span className={`font-medium ${month.net >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {formatCurrency(month.net, currency)}
+                      </span>
+                    </div>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
                       <div className="flex h-2">
@@ -443,7 +484,7 @@ export default function DashboardPage() {
                         <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium text-right ${
                           transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
                         }`}>
-                          {transaction.type === 'income' ? '+' : '-'}{formatCurrency(transaction.amount)}
+                          {transaction.type === 'income' ? '+' : '-'}{formatCurrency(transaction.amount, currency)}
                         </td>
                       </tr>
                     ))}
@@ -507,6 +548,53 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
+
+        {/* Clear Data Confirmation Modal */}
+        {showClearConfirm && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0">
+                  <AlertTriangle className="h-6 w-6 text-red-600" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    Clear All Data?
+                  </h3>
+                  <p className="text-sm text-gray-600 mb-4">
+                    This will permanently delete all {transactions.length} transactions and your mapping configuration. This action cannot be undone.
+                  </p>
+                  <div className="flex gap-3 justify-end">
+                    <button
+                      onClick={() => setShowClearConfirm(false)}
+                      disabled={isClearing}
+                      className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors disabled:opacity-50"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleClearAllData}
+                      disabled={isClearing}
+                      className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 transition-colors disabled:opacity-50 inline-flex items-center gap-2"
+                    >
+                      {isClearing ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                          Clearing...
+                        </>
+                      ) : (
+                        <>
+                          <Trash2 className="h-4 w-4" />
+                          Delete All Data
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Empty State */}
         {transactions.length === 0 && (

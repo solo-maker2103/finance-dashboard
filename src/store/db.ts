@@ -7,9 +7,9 @@ export class FinanceDashboardDB extends Dexie {
 
   constructor() {
     super('FinanceDashboard')
-    this.version(1).stores({
-      transactions: '++id, date, category, type',
-      mappingConfig: '++id',
+    this.version(2).stores({
+      transactions: '++id, date, category, type, currency',
+      mappingConfig: '++id, currency',
     })
   }
 }
