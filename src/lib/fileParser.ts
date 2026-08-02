@@ -67,9 +67,21 @@ async function parseExcel(file: File): Promise<ParsedFile> {
     throw new Error('The Excel file appears to be empty.')
   }
 
+  // Convert Excel date serial numbers to Date objects
+  const convertExcelDates = (value: unknown): unknown => {
+    if (typeof value === 'number' && value > 0 && value < 500000) {
+      // Excel dates are serial numbers (days since 1900-01-01)
+      // Note: Excel incorrectly treats 1900 as a leap year, so we use 1899-12-30 as base
+      const excelEpoch = new Date(1899, 11, 30)
+      const date = new Date(excelEpoch.getTime() + value * 24 * 60 * 60 * 1000)
+      return date
+    }
+    return value
+  }
+
   return {
     headers: matrix[0].map((cell) => String(cell ?? '').trim()),
-    rows: matrix.slice(1).map((row) => row.map((cell) => cell ?? '')),
+    rows: matrix.slice(1).map((row) => row.map((cell) => convertExcelDates(cell ?? ''))),
   }
 }
 
