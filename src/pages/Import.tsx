@@ -16,6 +16,7 @@ import FileUpload from '../components/FileUpload'
 import { detectColumnType, type ColumnMapping } from '../lib/columnDetector'
 import type { ParsedFile } from '../lib/fileParser'
 import { db } from '../store'
+import { processTransactions } from '../lib/dataProcessor'
 import type { MappingConfig, Transaction, TransactionType, Currency } from '../types'
 
 const PREVIEW_LIMIT = 5
@@ -247,13 +248,27 @@ function Import() {
     setSaving(true)
     setSaveError(null)
     try {
-      await db.mappingConfig.add(config)
+      // Process and save transactions
+      const transactions = processTransactions(parsedFile.rows, config)
+      
+      if (transactions.length === 0) {
+        setSaveError('No valid transactions found in the file. Please check your data.')
+        setSaving(false)
+        return
+      }
+      
+      // Save mapping config and transactions in a transaction
+      await db.transaction('rw', [db.mappingConfig, db.transactions], async () => {
+        await db.mappingConfig.add(config)
+        await db.transactions.bulkAdd(transactions)
+      })
+      
       navigate('/dashboard')
     } catch (error) {
       setSaveError(
         error instanceof Error
-          ? `Failed to save mapping: ${error.message}`
-          : 'Failed to save mapping. Please try again.'
+          ? `Failed to save data: ${error.message}`
+          : 'Failed to save data. Please try again.'
       )
       setSaving(false)
     }
