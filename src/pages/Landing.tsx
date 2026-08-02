@@ -14,7 +14,6 @@ import {
 } from 'lucide-react'
 import { db } from '../store'
 import { demoTransactions } from '../lib/demoData'
-import type { Transaction } from '../types'
 
 function Landing() {
   const navigate = useNavigate()
